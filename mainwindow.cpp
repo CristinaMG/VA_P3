@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gray2ColorImage.create(240,320,CV_8UC3);
     destGray2ColorImage.create(240,320,CV_8UC3);
 
+    matcherObj = BFMatcher();
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
@@ -60,6 +62,8 @@ void MainWindow::compute()
         cvtColor(colorImage, grayImage, CV_BGR2GRAY);
         cvtColor(colorImage, colorImage, CV_BGR2RGB);
     }
+
+    update_image();
 
     if(showColorImage)
     {
@@ -157,38 +161,102 @@ void MainWindow::copyWinSelect(){
 }
 
 void MainWindow::extract_descriptor(){
-    copyWinSelect();
+    //copyWinSelect();
 
     std::vector<KeyPoint> keyPoints;
     Mat descriptors;
     Ptr<ORB> detector = ORB::create();
 
+    Mat win;
+    win.create(imageWindow.height,imageWindow.width,CV_8UC1);
+    Mat(grayImage, imageWindow).copyTo(win);
     //tenemos que pasarle exclusivamente el recuadro sin los negros alrededor.
-    detector->detectAndCompute(destGrayImage, Mat(), keyPoints, descriptors,false);
-    std::vector<Mat> arrayDescriptor;
-    arrayDescriptor.push_back(descriptors); // se añade al final
-    // para quitarlo pop_back(); creo
-    //también hay que guardar la imagen original en el array, para ello nos definimos un struct para guardar el vector de imagenes y otro con las imagenes
-    // y un  vector on toda la información.
-    // también se puede hacer con una lista de listas.
+    detector->detectAndCompute(win, Mat(), keyPoints, descriptors,false);
+
     // 1 bfmatcher y 3 vectores y tienen que ser de la clase.
     // para tener ordenado el bf matcher si se borra o se añade algo se coge y se vuelve a crear de nuevo la colección y meter los 3 vectores en el bfmatcher .
-
+    std::vector<Mat> obj = {win,descriptors};
     switch (ui->comboBox->currentIndex()) {
     case 0:
-        matcherObj1.add(arrayDescriptor);
+        arrayDescriptor1.push_back(obj); //push_back añade al final    // para quitarlo pop_back(); creo
+        ui->slider->setMaximum(arrayDescriptor1.size()-1);
+        ui->slider->setSliderPosition(arrayDescriptor1.size());
         break;
     case 1:
-        matcherObj2.add(arrayDescriptor);
+        arrayDescriptor2.push_back(obj);
+        ui->slider->setMaximum(arrayDescriptor2.size()-1);
+        ui->slider->setSliderPosition(arrayDescriptor2.size());
         break;
     case 2:
-        matcherObj3.add(arrayDescriptor);
+        arrayDescriptor3.push_back(obj);
+        ui->slider->setMaximum(arrayDescriptor3.size()-1);
+        ui->slider->setSliderPosition(arrayDescriptor3.size());
         break;
     default:
         break;
     }
 
+    matcherObj.clear();
+    for(auto a: arrayDescriptor1)
+        matcherObj.add(a.at(1));
 
+    for(auto a: arrayDescriptor2)
+        matcherObj.add(a.at(1));
+
+    for(auto a: arrayDescriptor3)
+        matcherObj.add(a.at(1));
 }
 
+void MainWindow::update_image(){
 
+    int x, y;
+    Mat winD;
+    try{
+        destGrayImage.setTo(0);
+        switch (ui->comboBox->currentIndex()) {
+        case 0:
+            if(arrayDescriptor1.size()>0){
+                ui->slider->setMaximum(arrayDescriptor1.size()-1);
+                x = (320-arrayDescriptor1.at(ui->slider->value()).at(0).cols)/2;
+                y = (240-arrayDescriptor1.at(ui->slider->value()).at(0).rows)/2;
+
+                winD = destGrayImage(cv::Rect(x, y, arrayDescriptor1.at(ui->slider->value()).at(0).cols, arrayDescriptor1.at(ui->slider->value()).at(0).rows));
+                arrayDescriptor1.at(ui->slider->value()).at(0).copyTo(winD);
+            }else{
+                ui->slider->setSliderPosition(0);
+                ui->slider->setMaximum(0);
+            }
+            break;
+        case 1:
+            if(arrayDescriptor2.size()>0){
+                ui->slider->setMaximum(arrayDescriptor2.size()-1);
+                x = (320-arrayDescriptor2.at(ui->slider->value()).at(0).cols)/2;
+                y = (240-arrayDescriptor2.at(ui->slider->value()).at(0).rows)/2;
+
+                winD = destGrayImage(cv::Rect(x, y, arrayDescriptor2.at(ui->slider->value()).at(0).cols, arrayDescriptor2.at(ui->slider->value()).at(0).rows));
+                arrayDescriptor2.at(ui->slider->value()).at(0).copyTo(winD);
+            }else{
+                ui->slider->setSliderPosition(0);
+                ui->slider->setMaximum(0);
+            }
+            break;
+        case 2:
+            if(arrayDescriptor3.size()>0){
+                ui->slider->setMaximum(arrayDescriptor3.size()-1);
+                x = (320-arrayDescriptor3.at(ui->slider->value()).at(0).cols)/2;
+                y = (240-arrayDescriptor3.at(ui->slider->value()).at(0).rows)/2;
+
+                winD = destGrayImage(cv::Rect(x, y, arrayDescriptor3.at(ui->slider->value()).at(0).cols, arrayDescriptor3.at(ui->slider->value()).at(0).rows));
+                arrayDescriptor3.at(ui->slider->value()).at(0).copyTo(winD);
+            }else{
+                ui->slider->setSliderPosition(0);
+                ui->slider->setMaximum(0);
+            }
+            break;
+        default:
+            break;
+        }
+    }catch(...){
+        qDebug()<<"Error update_image";
+    }
+}

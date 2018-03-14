@@ -39,9 +39,10 @@ private:
     bool capture, showColorImage, winSelected;
     Rect imageWindow;
 
-    BFMatcher matcherObj1;
-    BFMatcher matcherObj2;
-    BFMatcher matcherObj3;
+    BFMatcher matcherObj;
+    std::vector<std::vector<Mat>> arrayDescriptor1;
+    std::vector<std::vector<Mat>> arrayDescriptor2;
+    std::vector<std::vector<Mat>> arrayDescriptor3;
 
 public slots:
     void compute();
@@ -52,6 +53,7 @@ public slots:
 
     void extract_descriptor();
     void copyWinSelect();
+    void update_image();
 
 };
 

@@ -159,7 +159,7 @@
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QScrollBar" name="horizontalScrollBar">
+  <widget class="QScrollBar" name="slider">
    <property name="geometry">
     <rect>
      <x>480</x>
