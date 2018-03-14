@@ -163,8 +163,17 @@ void MainWindow::extract_descriptor(){
     Mat descriptors;
     Ptr<ORB> detector = ORB::create();
 
+    //tenemos que pasarle exclusivamente el recuadro sin los negros alrededor.
     detector->detectAndCompute(destGrayImage, Mat(), keyPoints, descriptors,false);
-    std::vector<Mat> arrayDescriptor = {descriptors};
+    std::vector<Mat> arrayDescriptor;
+    arrayDescriptor.push_back(descriptors); // se añade al final
+    // para quitarlo pop_back(); creo
+    //también hay que guardar la imagen original en el array, para ello nos definimos un struct para guardar el vector de imagenes y otro con las imagenes
+    // y un  vector on toda la información.
+    // también se puede hacer con una lista de listas.
+    // 1 bfmatcher y 3 vectores y tienen que ser de la clase.
+    // para tener ordenado el bf matcher si se borra o se añade algo se coge y se vuelve a crear de nuevo la colección y meter los 3 vectores en el bfmatcher .
+
     switch (ui->comboBox->currentIndex()) {
     case 0:
         matcherObj1.add(arrayDescriptor);
@@ -178,6 +187,7 @@ void MainWindow::extract_descriptor(){
     default:
         break;
     }
+
 
 }
 
