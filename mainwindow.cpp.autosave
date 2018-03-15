@@ -275,7 +275,10 @@ void MainWindow::update_destImage(){
 
 void MainWindow::detect_image(){
 
-    std::vector<KeyPoint> keyPoints;
+    std::vector<KeyPoint> keyPointsSrc;
+    std::vector<KeyPoint> keyPoints1;
+    std::vector<KeyPoint> keyPoints2;
+    std::vector<KeyPoint> keyPoints3;
     Mat descriptors;
     Ptr<ORB> detector = ORB::create();
 
@@ -283,7 +286,7 @@ void MainWindow::detect_image(){
     win.create(240,320,CV_8UC1);
     grayImage.copyTo(win);
 
-    detector->detectAndCompute(win, Mat(), keyPoints, descriptors,false);
+    detector->detectAndCompute(win, Mat(), keyPointsSrc, descriptors,false);
 
     std::vector<DMatch> matches; //correspondencias
     //matcherObj.match(descriptors, matches, Mat());

@@ -52,8 +52,10 @@ public slots:
     void deselectWindow();
 
     void extract_descriptor();
-    void copyWinSelect();
-    void update_image();
+    void del_image();
+    void update_matcher();
+    void update_destImage();
+    void detect_image();
 
 };
 
