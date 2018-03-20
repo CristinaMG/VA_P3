@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    cap = new VideoCapture(0);
+    cap = new VideoCapture(1);
     if(!cap->isOpened())
         cap = new VideoCapture(1);
     capture = true;
@@ -27,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gray2ColorImage.create(240,320,CV_8UC3);
     destGray2ColorImage.create(240,320,CV_8UC3);
 
-    matcherObj = BFMatcher();
+    matcherObj = BFMatcher(NORM_HAMMING);
+    detector = ORB::create(500, 1.2, 8, 16);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
@@ -150,36 +151,46 @@ void MainWindow::extract_descriptor(){
 
     std::vector<KeyPoint> keyPoints;
     Mat descriptors;
-    Ptr<ORB> detector = ORB::create();
 
     Mat win;
     win.create(imageWindow.height,imageWindow.width,CV_8UC1);
     Mat(grayImage, imageWindow).copyTo(win);
 
-    detector->detectAndCompute(win, Mat(), keyPoints, descriptors,false);
+    detector->detect(grayImage(imageWindow),keyPoints);
+    detector->compute(grayImage(imageWindow), keyPoints, descriptors);
+    //qDebug()<<keyPoints.size() << "img"<< imageWindow.height << imageWindow.width;
 
-    std::vector<Mat> obj = {win,descriptors};
-    switch (ui->comboBox->currentIndex()) {
-    case 0:
-        arrayDescriptor1.push_back(obj); //push_back añade al final    // para quitarlo pop_back(); creo
-        ui->slider->setMaximum(arrayDescriptor1.size()-1);
-        ui->slider->setSliderPosition(arrayDescriptor1.size());
-        break;
-    case 1:
-        arrayDescriptor2.push_back(obj);
-        ui->slider->setMaximum(arrayDescriptor2.size()-1);
-        ui->slider->setSliderPosition(arrayDescriptor2.size());
-        break;
-    case 2:
-        arrayDescriptor3.push_back(obj);
-        ui->slider->setMaximum(arrayDescriptor3.size()-1);
-        ui->slider->setSliderPosition(arrayDescriptor3.size());
-        break;
-    default:
-        break;
-    }
+    /*for(int i=0; i<keyPoints.size();i++)
+    {
+        int iniX=0;//(320-imageWindow.width)/2;
+        int iniY=0;//(240-imageWindow.height)/2;
+        visorS->drawSquare(QPointF(iniX+keyPoints[i].pt.x,iniY+keyPoints[i].pt.y),5,5,Qt::red, true) ;
+    }*/
 
-    update_matcher();
+    if(keyPoints.size()>4){
+        std::vector<Mat> obj = {win,descriptors};
+        switch (ui->comboBox->currentIndex()) {
+        case 0:
+            arrayDescriptor1.push_back(obj); //push_back añade al final    // para quitarlo pop_back(); creo
+            ui->slider->setMaximum(arrayDescriptor1.size()-1);
+            ui->slider->setSliderPosition(arrayDescriptor1.size());
+            break;
+        case 1:
+            arrayDescriptor2.push_back(obj);
+            ui->slider->setMaximum(arrayDescriptor2.size()-1);
+            ui->slider->setSliderPosition(arrayDescriptor2.size());
+            break;
+        case 2:
+            arrayDescriptor3.push_back(obj);
+            ui->slider->setMaximum(arrayDescriptor3.size()-1);
+            ui->slider->setSliderPosition(arrayDescriptor3.size());
+            break;
+        default:
+            break;
+        }
+
+        update_matcher();
+    }else{ qDebug()<<"Few characteristic points";}
 }
 
 void MainWindow::del_image(){
@@ -275,22 +286,64 @@ void MainWindow::update_destImage(){
 
 void MainWindow::detect_image(){
 
-    std::vector<KeyPoint> keyPoints;
+    std::vector<KeyPoint> keyPointsSrc;
+    std::vector<Point2f> points1;
+    std::vector<Point2f> points2;
+    std::vector<Point2f> points3;
+
     Mat descriptors;
-    Ptr<ORB> detector = ORB::create();
-
-    Mat win;
-    win.create(240,320,CV_8UC1);
-    grayImage.copyTo(win);
-
-    detector->detectAndCompute(win, Mat(), keyPoints, descriptors,false);
-
+    Point2f pt;
+    //Mat win;
+    //win.create(240,320,CV_8UC1);
+    //grayImage.copyTo(win);
+    uint result = 0;
+    uint img = 0;
+    detector->detectAndCompute(grayImage, Mat(), keyPointsSrc, descriptors, false);
     std::vector<DMatch> matches; //correspondencias
-    //matcherObj.match(descriptors, matches, Mat());
+    matcherObj.match(descriptors, matches, Mat());
 
-    //Que es la distancia y la distancia max
-    //matches.at(i).queryIdx
-    //for(int i = 0; i<matches.size(); i++){
-        //qDebug()<<keyPoints.at(matches.at(i).queryIdx).pt.x;
+    for(uint i = 0; i<matches.size(); i++){
+        if(matches[i].distance < 50){
+            pt = keyPointsSrc[matches[i].queryIdx].pt;
+            img = matches[i].imgIdx;
+            if(img < arrayDescriptor1.size())
+                points1.push_back(pt);
+            else{
+                result = arrayDescriptor1.size() + arrayDescriptor2.size();
+                if(img < result)
+                    points2.push_back(pt);
+                else
+                    points3.push_back(pt);
+            }
+        }
+    }
+
+    drawObject(points1, points2, points3);
+}
+
+void MainWindow::drawObject(std::vector<Point2f> p1, std::vector<Point2f> p2, std::vector<Point2f> p3){
+    if(p1.size()>4){
+        int maxX = 0, maxY = 0, minX = 320, minY =240;
+        for(uint i = 0; i<p1.size(); i++){
+            if(p1[i].x>maxX)
+                maxX = p1[i].x;
+            if(p1[i].y>maxY)
+                maxY = p1[i].y;
+            if(p1[i].x<minX)
+                minX = p1[i].x;
+            if(p1[i].y<minY)
+                minY = p1[i].y;
+        }
+
+        visorS->drawSquare(QPointF(minX,minY),maxX-minX,maxY-minY,Qt::red, false) ;
+
+    }
+
+    //if(p2.size()>4){
+
+    //}
+
+    //if(p3.size()>4){
+
     //}
 }

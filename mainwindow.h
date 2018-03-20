@@ -43,6 +43,7 @@ private:
     std::vector<std::vector<Mat>> arrayDescriptor1;
     std::vector<std::vector<Mat>> arrayDescriptor2;
     std::vector<std::vector<Mat>> arrayDescriptor3;
+    Ptr<ORB> detector;
 
 public slots:
     void compute();
@@ -56,6 +57,7 @@ public slots:
     void update_matcher();
     void update_destImage();
     void detect_image();
+    void drawObject(std::vector<Point2f> p1, std::vector<Point2f> p2, std::vector<Point2f> p3);
 
 };
 
