@@ -1,3 +1,5 @@
+// Authors: Aitor del Álamo Martín and Cristina Mendoza Gutiérrez
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -40,8 +42,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->delButton, SIGNAL(clicked(bool)), this, SLOT(del_image()));
 
     timer.start(60);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -158,14 +158,6 @@ void MainWindow::extract_descriptor(){
 
     detector->detect(grayImage(imageWindow),keyPoints);
     detector->compute(grayImage(imageWindow), keyPoints, descriptors);
-    //qDebug()<<keyPoints.size() << "img"<< imageWindow.height << imageWindow.width;
-
-    /*for(int i=0; i<keyPoints.size();i++)
-    {
-        int iniX=0;//(320-imageWindow.width)/2;
-        int iniY=0;//(240-imageWindow.height)/2;
-        visorS->drawSquare(QPointF(iniX+keyPoints[i].pt.x,iniY+keyPoints[i].pt.y),5,5,Qt::red, true) ;
-    }*/
 
     if(keyPoints.size()>4){
         std::vector<Mat> obj = {win,descriptors};
@@ -190,6 +182,7 @@ void MainWindow::extract_descriptor(){
         }
 
         update_matcher();
+        deselectWindow();
     }else{ qDebug()<<"Few characteristic points";}
 }
 
@@ -283,7 +276,6 @@ void MainWindow::update_destImage(){
     }
 }
 
-
 void MainWindow::detect_image(){
 
     std::vector<KeyPoint> keyPointsSrc;
@@ -293,9 +285,6 @@ void MainWindow::detect_image(){
 
     Mat descriptors;
     Point2f pt;
-    //Mat win;
-    //win.create(240,320,CV_8UC1);
-    //grayImage.copyTo(win);
     uint result = 0;
     uint img = 0;
     detector->detectAndCompute(grayImage, Mat(), keyPointsSrc, descriptors, false);
@@ -303,7 +292,7 @@ void MainWindow::detect_image(){
     matcherObj.match(descriptors, matches, Mat());
 
     for(uint i = 0; i<matches.size(); i++){
-        if(matches[i].distance < 50){
+        if(matches[i].distance < 30){
             pt = keyPointsSrc[matches[i].queryIdx].pt;
             img = matches[i].imgIdx;
             if(img < arrayDescriptor1.size())
@@ -334,16 +323,45 @@ void MainWindow::drawObject(std::vector<Point2f> p1, std::vector<Point2f> p2, st
             if(p1[i].y<minY)
                 minY = p1[i].y;
         }
-
-        visorS->drawSquare(QPointF(minX,minY),maxX-minX,maxY-minY,Qt::red, false) ;
-
+        int x = (maxX-minX)/2 + minX;
+        int y = (maxY-minY)/2 + minY;
+        visorS->drawSquare(QPointF(x,y),maxX-minX,maxY-minY,Qt::red, false);
+        visorS->drawText(QPoint(x,y), QString("Object1"), 12, Qt::red);
     }
 
-    //if(p2.size()>4){
+    if(p2.size()>4){
+        int maxX = 0, maxY = 0, minX = 320, minY =240;
+        for(uint i = 0; i<p2.size(); i++){
+            if(p2[i].x>maxX)
+                maxX = p2[i].x;
+            if(p2[i].y>maxY)
+                maxY = p2[i].y;
+            if(p2[i].x<minX)
+                minX = p2[i].x;
+            if(p2[i].y<minY)
+                minY = p2[i].y;
+        }
+        int x = (maxX-minX)/2 + minX;
+        int y = (maxY-minY)/2 + minY;
+        visorS->drawSquare(QPointF(x,y),maxX-minX,maxY-minY,Qt::blue, false);
+        visorS->drawText(QPoint(x,y),QString("Object2"), 12, Qt::blue);
+    }
 
-    //}
-
-    //if(p3.size()>4){
-
-    //}
+    if(p3.size()>4){
+        int maxX = 0, maxY = 0, minX = 320, minY =240;
+        for(uint i = 0; i<p3.size(); i++){
+            if(p3[i].x>maxX)
+                maxX = p3[i].x;
+            if(p3[i].y>maxY)
+                maxY = p3[i].y;
+            if(p3[i].x<minX)
+                minX = p3[i].x;
+            if(p3[i].y<minY)
+                minY = p3[i].y;
+        }
+        int x = (maxX-minX)/2 + minX;
+        int y = (maxY-minY)/2 + minY;
+        visorS->drawSquare(QPointF(x,y),maxX-minX,maxY-minY,Qt::yellow, false);
+        visorS->drawText(QPoint(x,y),QString("Object3"), 12, Qt::yellow);
+    }
 }
