@@ -163,18 +163,21 @@ void MainWindow::extract_descriptor(){
         std::vector<Mat> obj = {win,descriptors};
         switch (ui->comboBox->currentIndex()) {
         case 0:
-            arrayDescriptor1.push_back(obj); //push_back añade al final    // para quitarlo pop_back(); creo
-            ui->slider->setMaximum(arrayDescriptor1.size()-1);
+            arrayDescriptor1.push_back(obj);
+            if(arrayDescriptor1.size()>0)
+                ui->slider->setMaximum(arrayDescriptor1.size()-1);
             ui->slider->setSliderPosition(arrayDescriptor1.size());
             break;
         case 1:
             arrayDescriptor2.push_back(obj);
-            ui->slider->setMaximum(arrayDescriptor2.size()-1);
+            if(arrayDescriptor2.size()>0)
+                ui->slider->setMaximum(arrayDescriptor2.size()-1);
             ui->slider->setSliderPosition(arrayDescriptor2.size());
             break;
         case 2:
             arrayDescriptor3.push_back(obj);
-            ui->slider->setMaximum(arrayDescriptor3.size()-1);
+            if(arrayDescriptor3.size()>0)
+                ui->slider->setMaximum(arrayDescriptor3.size()-1);
             ui->slider->setSliderPosition(arrayDescriptor3.size());
             break;
         default:
@@ -190,17 +193,20 @@ void MainWindow::del_image(){
     switch (ui->comboBox->currentIndex()) {
     case 0:
         arrayDescriptor1.erase(arrayDescriptor1.begin()+ui->slider->value());
-        ui->slider->setMaximum(arrayDescriptor1.size()-1);
+        if(arrayDescriptor1.size()>0)
+            ui->slider->setMaximum(arrayDescriptor1.size()-1);
         ui->slider->setSliderPosition(arrayDescriptor1.size());
         break;
     case 1:
         arrayDescriptor2.erase(arrayDescriptor2.begin()+ui->slider->value());
-        ui->slider->setMaximum(arrayDescriptor2.size()-1);
+        if(arrayDescriptor2.size()>0)
+            ui->slider->setMaximum(arrayDescriptor2.size()-1);
         ui->slider->setSliderPosition(arrayDescriptor2.size());
         break;
     case 2:
         arrayDescriptor3.erase(arrayDescriptor3.begin()+ui->slider->value());
-        ui->slider->setMaximum(arrayDescriptor3.size()-1);
+        if(arrayDescriptor3.size()>0)
+            ui->slider->setMaximum(arrayDescriptor3.size()-1);
         ui->slider->setSliderPosition(arrayDescriptor3.size());
         break;
     default:
